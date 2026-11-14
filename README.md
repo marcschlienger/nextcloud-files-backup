@@ -14,9 +14,10 @@ Recovery is to ordinary files or a freshly set-up Nextcloud account.
 
 ## 1. Confirm the source
 
-[Borgstage](https://github.com/marcschlienger/borgstage) documents AIO with the data directory at `/data/ncdata`, one primary
-user, server-side encryption disabled and no external storage or group folders.
-Verify these on the live host. Confirm the account ID and the AIO container's
+[Borgstage](https://github.com/marcschlienger/borgstage) documents AIO with the
+data directory at `/data/ncdata`, one primary user, server-side encryption
+disabled and no external storage or group folders. Verify these on the live
+host. Confirm the account ID and the AIO container's
 host mount, then compare `/data/ncdata/ACCOUNT_ID/files` with the web UI.
 The design assumes ordinary files on local storage, with no Nextcloud end-to-end
 encryption for the folders being backed up. Rsync skips symlinks and special
@@ -24,10 +25,10 @@ files. Pulling a live directory can capture files from different moments during
 the run. If the account setup changes, review coverage before relying on this job.
 
 On the Linux backup host, install Bash, rsync, OpenSSH client, Borg **1.4.x** and
-util-linux (`flock`), plus curl if you set `PING_URL`. Allocate room for one complete staged copy. Choose a new
-offsite repository (the example uses Hetzner Storage Box), or a local repository
-on separate storage. The Nextcloud server needs a maintained rsync package
-including `rrsync`.
+util-linux (`flock`), plus curl if you set `PING_URL`. Allocate room for one
+complete staged copy. Choose a new offsite repository (the example uses Hetzner
+Storage Box), or a local repository on separate storage. The Nextcloud server
+needs a maintained rsync package including `rrsync`.
 
 As root on the backup host, create two dedicated SSH keys (the second is only
 for a remote repository):

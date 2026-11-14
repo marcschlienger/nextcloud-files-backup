@@ -8,4 +8,3 @@ Type=oneshot
 ExecStart=/usr/local/sbin/nextcloud-files-backup
 StateDirectory=nextcloud-files-backup
 StateDirectoryMode=0700
-UMask=0077
