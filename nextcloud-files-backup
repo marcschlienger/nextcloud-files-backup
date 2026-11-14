@@ -3,12 +3,14 @@ set -euo pipefail
 umask 077
 
 config=${1:-/etc/nextcloud-files-backup.conf}
-# This shell configuration must be writable only by the operator.
+# This shell configuration must be writable only by the operator. Every
+# variable it sets is exported, so BORG_* settings need no `export`.
+set -a
 # shellcheck source=/dev/null
 source "$config"
+set +a
 : "${SOURCE:?Set SOURCE}" "${BORG_REPO:?Set BORG_REPO}" "${BORG_PASSCOMMAND:?Set BORG_PASSCOMMAND}"
 : "${STATE_DIR:=/var/lib/nextcloud-files-backup}"
-export BORG_REPO BORG_PASSCOMMAND
 
 if [[ $(borg --version) != 'borg 1.4.'* ]]; then
     echo 'Borg 1.4.x is required.' >&2
@@ -17,22 +19,35 @@ fi
 
 mkdir -p -- "$STATE_DIR/files"
 exec 9>"$STATE_DIR/backup.lock"
-flock -n 9
+flock -n 9 || { echo "Another run holds $STATE_DIR/backup.lock." >&2; exit 1; }
 cd -- "$STATE_DIR"
 
-# A failed or interrupted pull must never feed archive creation or retention.
-rsync -rpt --delete-delay --timeout=600 \
-    -e 'ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=30 -o ServerAliveCountMax=3' \
-    -- "${SOURCE}:./" files/
+rsh='ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=30 -o ServerAliveCountMax=3'
 
-# Guard against a reachable but empty source, including an empty mount.
+# Guard against a reachable but empty source, including an empty mount. This
+# runs before the pull because the pull deletes from the staging copy; the
+# listing is one line (".") for an empty directory. A failed listing aborts here.
+listing=$(rsync -d --list-only --timeout=600 -e "$rsh" -- "${SOURCE}:./")
+if [[ $listing != *$'\n'* ]]; then
+    echo 'Source is empty. The staging copy and existing archives were left alone.' >&2
+    exit 1
+fi
+
+# A failed or interrupted pull must never feed archive creation or retention.
+# Exit 24 only reports files that vanished from the live source during the
+# pull; everything else was transferred, so it is not a failure.
+rc=0
+rsync -rpt --delete-delay --timeout=600 -e "$rsh" -- "${SOURCE}:./" files/ || rc=$?
+[[ $rc -eq 0 || $rc -eq 24 ]] || exit "$rc"
+
+# The listing only proves the source has entries; a tree of empty directories
+# is not a backup either.
 if [[ -z $(find files -type f -print -quit) ]]; then
     echo 'Source contains no regular files. Existing archives were left alone.' >&2
     exit 1
 fi
 
-archive="nextcloud-files-$(date -u +%Y%m%dT%H%M%S%NZ)"
-borg create --stats --compression zstd,3 "::$archive" files
+borg create --stats --compression zstd,3 '::nextcloud-files-{utcnow:%Y-%m-%dT%H:%M:%S}' files
 borg prune --list --glob-archives 'nextcloud-files-*' \
     --keep-within 7d --keep-daily 14 --keep-weekly 8 --keep-monthly 12
 borg compact

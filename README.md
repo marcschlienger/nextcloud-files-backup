@@ -14,7 +14,7 @@ Recovery is to ordinary files or a freshly set-up Nextcloud account.
 
 ## 1. Confirm the source
 
-Borgstage documents AIO with the data directory at `/data/ncdata`, one primary
+[Borgstage](https://github.com/marcschlienger/borgstage) documents AIO with the data directory at `/data/ncdata`, one primary
 user, server-side encryption disabled and no external storage or group folders.
 Verify these on the live host. Confirm the account ID and the AIO container's
 host mount, then compare `/data/ncdata/ACCOUNT_ID/files` with the web UI.
@@ -66,13 +66,14 @@ See [Hetzner's SSH and Borg setup](https://docs.hetzner.com/storage/storage-box/
 ## 2. Install and run once
 
 Run these commands as root on the backup host from this project directory.
-Use a new config and passphrase on first install. Preserve both on subsequent
-installs.
+The block is safe to repeat when upgrading: the last two commands refuse to
+overwrite an existing config or passphrase and report `cannot overwrite existing
+file`, which is expected.
 
 ```sh
 install -m 0755 nextcloud-files-backup /usr/local/sbin/
-install -m 0644 nextcloud-files-backup.{service,timer} /etc/systemd/system/
-install -m 0600 nextcloud-files-backup.conf.example /etc/nextcloud-files-backup.conf
+install -m 0644 nextcloud-files-backup.service nextcloud-files-backup.timer /etc/systemd/system/
+(umask 077; set -C; cat nextcloud-files-backup.conf.example > /etc/nextcloud-files-backup.conf)
 (umask 077; set -C; openssl rand -base64 32 > /etc/nextcloud-files-backup.passphrase)
 ```
 
@@ -102,7 +103,9 @@ systemctl enable --now nextcloud-files-backup.timer
 systemctl list-timers nextcloud-files-backup.timer
 ```
 
-A nonzero rsync exit or an empty tree stops the run before Borg. A nonzero
+An empty source stops the run before the pull, so the staging copy is kept. A
+failed pull stops it before Borg; the one exception is rsync exit 24, which
+only reports files that vanished from the live source mid-pull. A nonzero
 Borg create exit stops retention. The lock prevents overlapping runs on the
 same staging directory. If the tree is intentionally emptied, the job will
 report failure and preserve the existing history. Inspect the service journal

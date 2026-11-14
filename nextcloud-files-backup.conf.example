@@ -1,10 +1,10 @@
-# Root-owned shell configuration, mode 0600. Use an SSH alias from /root/.ssh/config.
+# Root-owned shell configuration, mode 0600: plain KEY=value lines, all exported.
+# Use an SSH alias from /root/.ssh/config.
 SOURCE=nextcloud-files-source
-STATE_DIR=/var/lib/nextcloud-files-backup
 
 # Use a NEW dedicated Borg repository. Example offsite destination.
 BORG_REPO=ssh://nextcloud-files-store/./borg/nextcloud-files
-export BORG_REMOTE_PATH=borg-1.4
+BORG_REMOTE_PATH=borg-1.4
 BORG_PASSCOMMAND='cat /etc/nextcloud-files-backup.passphrase'
 
 # For a local repo, set BORG_REPO to an absolute path on separate storage
