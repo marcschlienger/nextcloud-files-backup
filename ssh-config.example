@@ -1,0 +1,20 @@
+# Add to /root/.ssh/config on the backup host.
+Host nextcloud-files-source
+    HostName nextcloud-host
+    User root
+    IdentityFile /root/.ssh/id_ed25519_nextcloud_files
+    IdentitiesOnly yes
+    BatchMode yes
+    StrictHostKeyChecking yes
+
+Host nextcloud-files-store
+    HostName USER.your-storagebox.de
+    User USER
+    Port 23
+    IdentityFile /root/.ssh/id_ed25519_nextcloud_files_store
+    IdentitiesOnly yes
+    BatchMode yes
+    StrictHostKeyChecking yes
+    ConnectTimeout 20
+    ServerAliveInterval 30
+    ServerAliveCountMax 3
