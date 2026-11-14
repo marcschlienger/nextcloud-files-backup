@@ -17,8 +17,8 @@ Recovery is to ordinary files or a freshly set-up Nextcloud account.
 [Borgstage](https://github.com/marcschlienger/borgstage) documents AIO with the
 data directory at `/data/ncdata`, one primary user, server-side encryption
 disabled and no external storage or group folders. Verify these on the live
-host. Confirm the account ID and the AIO container's
-host mount, then compare `/data/ncdata/ACCOUNT_ID/files` with the web UI.
+host. Confirm the account ID and the AIO container's host mount, then compare
+`/data/ncdata/ACCOUNT_ID/files` with the web UI.
 The design assumes ordinary files on local storage, with no Nextcloud end-to-end
 encryption for the folders being backed up. Rsync skips symlinks and special
 files. Pulling a live directory can capture files from different moments during
@@ -74,6 +74,7 @@ file`, which is expected.
 ```sh
 install -m 0755 nextcloud-files-backup /usr/local/sbin/
 install -m 0644 nextcloud-files-backup.service nextcloud-files-backup.timer /etc/systemd/system/
+systemctl daemon-reload
 (umask 077; set -C; cat nextcloud-files-backup.conf.example > /etc/nextcloud-files-backup.conf)
 (umask 077; set -C; openssl rand -base64 32 > /etc/nextcloud-files-backup.passphrase)
 ```
@@ -90,7 +91,6 @@ set -a
 set +a
 borg init --encryption=repokey-blake2 --make-parent-dirs "$BORG_REPO"
 borg key export "$BORG_REPO" /root/nextcloud-files-borg-key
-systemctl daemon-reload
 systemctl start nextcloud-files-backup.service
 journalctl -u nextcloud-files-backup.service -n 80 --no-pager
 borg list "$BORG_REPO"
