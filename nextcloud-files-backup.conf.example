@@ -9,3 +9,7 @@ BORG_PASSCOMMAND='cat /etc/nextcloud-files-backup.passphrase'
 
 # For a local repo, set BORG_REPO to an absolute path on separate storage
 # and remove the BORG_REMOTE_PATH line.
+
+# Optional: requested once after every successful run. A monitor that expects
+# this request alerts when it stops arriving. The URL acts as a password.
+#PING_URL=https://monitor.example/ping/UUID

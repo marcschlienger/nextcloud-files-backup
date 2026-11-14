@@ -51,3 +51,10 @@ borg create --stats --compression zstd,3 '::nextcloud-files-{utcnow:%Y-%m-%dT%H:
 borg prune --list --glob-archives 'nextcloud-files-*' \
     --keep-within 7d --keep-daily 14 --keep-weekly 8 --keep-monthly 12
 borg compact
+
+# Optional dead-man's switch: a monitor that expects this request alerts when
+# it stops arriving. A failed ping must not turn a finished backup into a failed one.
+if [[ -n ${PING_URL:-} ]]; then
+    curl -fsS -m 10 --retry 3 -o /dev/null -- "$PING_URL" ||
+        echo 'Monitor ping failed; the backup itself succeeded.' >&2
+fi

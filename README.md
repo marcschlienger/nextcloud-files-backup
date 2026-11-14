@@ -24,7 +24,7 @@ files. Pulling a live directory can capture files from different moments during
 the run. If the account setup changes, review coverage before relying on this job.
 
 On the Linux backup host, install Bash, rsync, OpenSSH client, Borg **1.4.x** and
-util-linux (`flock`). Allocate room for one complete staged copy. Choose a new
+util-linux (`flock`), plus curl if you set `PING_URL`. Allocate room for one complete staged copy. Choose a new
 offsite repository (the example uses Hetzner Storage Box), or a local repository
 on separate storage. The Nextcloud server needs a maintained rsync package
 including `rrsync`.
@@ -111,6 +111,15 @@ same staging directory. If the tree is intentionally emptied, the job will
 report failure and preserve the existing history. Inspect the service journal
 after failures. Repeat the sample restore periodically and check the repository
 with `borg check "$BORG_REPO"` from a shell with the config loaded.
+
+Nothing in the job itself alerts you when a night fails. To get an alert, set
+`PING_URL` in the config to the ping URL of a dead-man's-switch monitor, for
+example a Healthchecks check. The job requests it once, after Borg has finished
+successfully, so a failed, skipped or never-started run shows up as a missing
+ping. Schedule the check for 03:00 Europe/Berlin with a grace time longer than a
+normal run. The URL acts as a password: keep it in the config, not in the
+repository. A failed ping is reported in the journal but does not fail the
+backup; leave `PING_URL` unset to disable it.
 
 ## 3. Restore a sample, a folder, or everything
 
