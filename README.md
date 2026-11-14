@@ -96,6 +96,10 @@ journalctl -u nextcloud-files-backup.service -n 80 --no-pager
 borg list "$BORG_REPO"
 ```
 
+The first run copies the whole tree and can take hours. `systemctl start` waits
+for it, and the pull logs nothing until it ends; from a second shell,
+`du -sh /var/lib/nextcloud-files-backup/files` shows the staged copy growing.
+
 Keep the exported key securely with your recovery materials. After the restore
 test below succeeds, enable the timer:
 

@@ -43,7 +43,7 @@ fi
 # Exit 24 only reports files that vanished from the live source during the
 # pull; everything else was transferred, so it is not a failure.
 rc=0
-rsync -rpt --delete-delay --timeout=600 -e "$BORG_RSH" -- "${SOURCE}:./" files/ || rc=$?
+rsync -rpt --delete-delay --timeout=600 --stats -e "$BORG_RSH" -- "${SOURCE}:./" files/ || rc=$?
 [[ $rc -eq 0 || $rc -eq 24 ]] || exit "$rc"
 
 # The listing only proves the source has entries; a tree of empty directories
